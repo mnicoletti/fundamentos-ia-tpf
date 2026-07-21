@@ -216,3 +216,20 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- TP Fundamentos IA ---
+# Dataset Kaggle (250MB, no versionable)
+data/*
+!data/.gitkeep
+
+# Notebook y PDF generados por build_nb.py (ADR-001) — artifacts, no fuente
+dist/*
+!dist/.gitkeep
+
+# Salvo la corrida canónica congelada para entrega (PLAN F4) — se commitea
+# a mano cuando llegue el momento, ej:
+#   git add -f dist/TP_Fundamentos_IA_Financiero.ipynb dist/*.pdf
+
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
