@@ -69,7 +69,9 @@ Objetivo: resultados reales congelados + R5.
 1. `make pdf` (`--no-input`, tags `no-pdf` excluidos). Revisión tipográfica: cortes de página, tamaño de figuras, legibilidad de fórmulas.
 2. **Prueba de lectura fría** (R6): lectura completa del PDF sin abrir el notebook. Todo hueco encontrado → fix en `build_nb.py` → rebuild → re-export.
 3. Actualizar guía de defensa: cada respuesta anticipada acompañada de su razonamiento (por qué esa respuesta es cierta), no solo el texto a recitar.
-4. Ensayo de exposición de 15 min contra el guion, con el PDF proyectado.
+4. Ensayo de exposición de **5 min** (recortado desde 15 min: el profesor redujo el tiempo por
+   persona, demasiados grupos para la agenda original) contra el guion de la guía de defensa,
+   con el PDF proyectado.
 
 **Gate de salida:** PDF final + guía actualizada + un ensayo completo cronometrado.
 

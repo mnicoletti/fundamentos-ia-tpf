@@ -34,22 +34,45 @@ Ese último párrafo es la tesis del TP. Si el profesor se queda con una sola id
 
 ---
 
-## 3. Guion de recorrido sugerido (defensa de ~15 min)
+## 3. Guion de recorrido — 5 minutos por persona
 
-**Minutos 0–2 — El problema.** Presentar la tarea T/P/E (tabla de §1.1). Enfatizar la elección de **3 clases con zona muerta** (umbral ±2%): sin la clase LATERAL, movimientos de ruido de ±0.1% contarían como señal, contaminando el aprendizaje.
+> **Cambio de último momento:** el profesor redujo el tiempo de exposición a **5 minutos por
+> persona** (demasiados grupos para la agenda original). Este guion reemplaza al de ~15 min.
+> Con 5 minutos no entra explicar arquitecturas, features ni teoría en vivo — eso queda para
+> la §4 (preguntas), que ya está armada para responder en el momento si el profesor repregunta.
+> El guion en vivo prioriza tres cosas y corta todo lo demás: el problema, el único punto
+> metodológico que blinda el trabajo (anti-leakage), y una lectura honesta del resultado.
 
-**Minutos 2–5 — Los datos y las features.** Justificar cada indicador como *feature engineering* informado por dominio: el RSI y el MACD son transformaciones no lineales del precio que un analista humano usa; se las damos al modelo pre-computadas en lugar de esperar que las descubra. Conexión directa con Goodfellow 5.4: "la elección de la representación tiene un efecto enorme en el desempeño".
+**0:00–1:00 — Pitch + problema.** El *elevator pitch* de la §1, tal cual (~30 seg). Rematar con
+la elección de **3 clases con zona muerta** (±θ=2%) en una frase: sin LATERAL, ruido de ±0.1%
+contaría como señal.
 
-**Minutos 5–8 — La metodología anti-leakage (el corazón).** Explicar las tres capas de protección:
-1. **Split temporal**, no aleatorio: los datos financieros violan el supuesto i.i.d. (Cap. 5.2); un shuffle mete el futuro en el entrenamiento.
-2. **Purga de k muestras** en la frontera: las últimas etiquetas de train se calculan mirando días que pertenecen al test. Referencia externa: López de Prado, *Advances in Financial ML* (2018), Cap. 7 (*purged K-fold*).
-3. **StandardScaler ajustado solo con train**: las medias/desvíos del test no deben influir en la transformación.
+**1:00–2:30 — El corazón: anti-leakage, en una sola idea.** "Los datos financieros violan
+i.i.d. — la autocorrelación de los retornos es ≈0 pero la de \|retornos\| es >0, está en la
+sección de datos —, así que el split es **temporal**, no aleatorio, con una **purga de k=5
+muestras** en la frontera para que ninguna etiqueta de entrenamiento mire información del
+período de test." No hace falta desglosar el scaler acá salvo que pregunten (queda listo en
+§4).
 
-**Minutos 8–11 — Los dos modelos.** Regresión logística = softmax sobre combinación lineal; frontera = hiperplano. MLP = dos capas ocultas ReLU; por el teorema de aproximación universal (6.4.1) puede representar fronteras arbitrarias — pero "poder representar" no es "poder aprender", distinción que el propio Goodfellow subraya. Mostrar las curvas de pérdida y señalar dónde actuó el early stopping.
+**2:30–4:00 — Resultados y lectura honesta.** Mostrar la tabla comparativa, decir dos frases:
+1. "Ni la Regresión Logística (0.443) ni el MLP (0.33–0.45 según la corrida) superaron al
+   baseline trivial (0.548) — esperable, coherente con la autocorrelación ≈0 de los datos."
+2. "Por F1 macro y AUC, que no premian el sesgo hacia la clase mayoritaria, el MLP superó a la
+   Regresión Logística en las cuatro corridas realizadas — ventaja chica pero consistente."
 
-**Minutos 11–14 — Resultados y lectura honesta.** Presentar la tabla comparativa contra el baseline trivial (0.548): **ni la Regresión Logística (0.443) ni el MLP (0.328–0.448 según la corrida) lo superaron en accuracy** — resultado esperado, no un fracaso: es la confirmación, a nivel de clasificación, de lo que la autocorrelación ≈0 de la sección de datos ya predecía. La comparación honesta entre modelos no es por accuracy (sesgada por la clase mayoritaria) sino por F1 macro/AUC/mAP, donde el MLP superó consistentemente a la Regresión Logística en las cuatro corridas — una ventaja chica pero robusta (Cap. 5.2: la capacidad extra del MLP solo ayuda si hay algo de señal que capturar).
+**4:00–4:45 — Cierre.** Una frase: "el resultado modesto es el hallazgo, no un fracaso — confirma
+que el problema es tan difícil como predice la teoría de mercados eficientes, y que el pipeline
+lo mide sin fuga de información."
 
-**Minuto 14–15 — Demo.** El gráfico nuevo del período de test con las predicciones de ambos modelos lado a lado. Remarcar: el gráfico es visualización del resultado; el modelo consume el tensor numérico de indicadores.
+**4:45–5:00 — Buffer.** Margen para no pasarse (con 5 min, pasarse 30 seg ya es mucho). Si sobra
+tiempo o preguntan por la demo, mencionarla en una frase sin proyectarla: "hay una demo en la
+§9 del notebook, sobre una muestra real del período de prueba, si quieren verla."
+
+**Qué se corta respecto del guion largo (y por qué está bien cortarlo):** la explicación
+detallada de cada indicador técnico, el desglose de arquitectura del MLP capa por capa, y la
+demo en vivo. Ninguna de las tres es la tesis del trabajo — la tesis es la metodología
+anti-leakage y la lectura honesta del resultado (§1), y esas dos entran cómodas en 5 minutos.
+Si el profesor pregunta por algo cortado, está en §4 con el razonamiento completo.
 
 ---
 
