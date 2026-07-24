@@ -230,6 +230,9 @@ dist/*
 # a mano cuando llegue el momento, ej:
 #   git add -f dist/TP_Fundamentos_IA_Financiero.ipynb dist/*.pdf
 
+# .ipynb bajados de Colab durante corridas de F4, previo a congelar
+tmp/
+
 .ipynb_checkpoints/
 __pycache__/
 *.pyc
