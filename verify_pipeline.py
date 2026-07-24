@@ -237,7 +237,16 @@ def _instalar_mock_tensorflow() -> None:
         def set_seed(seed):
             pass
 
+    class _Experimental:
+        @staticmethod
+        def enable_op_determinism():
+            pass
+
+    class _Config:
+        experimental = _Experimental()
+
     tf_mod.random = _Random()
+    tf_mod.config = _Config()
     tf_mod.keras = keras_mod
     tf_mod.__version__ = "mocked"
 

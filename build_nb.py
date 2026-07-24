@@ -85,7 +85,13 @@ Instalamos las dependencias. En Google Colab, `yfinance` y `ta` no vienen preins
             metadata=NO_PDF,
         ),
         new_code_cell("""!pip install yfinance ta --quiet""", metadata=NO_PDF),
-        new_code_cell("""import numpy as np
+        new_code_cell("""import os
+# Deben fijarse ANTES de importar tensorflow para que surtan efecto por completo.
+os.environ["PYTHONHASHSEED"] = "42"
+os.environ["TF_DETERMINISTIC_OPS"] = "1"
+os.environ["TF_CUDNN_DETERMINISTIC"] = "1"
+
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import yfinance as yf
@@ -106,6 +112,9 @@ from sklearn.preprocessing import label_binarize
 SEED = 42
 np.random.seed(SEED)
 tf.random.set_seed(SEED)
+# np.random.seed/tf.random.set_seed no alcanzan para reproducibilidad bit-a-bit:
+# esto fuerza a que toda operacion de TF use una implementacion determinista.
+tf.config.experimental.enable_op_determinism()
 
 print("TensorFlow:", tf.__version__)""", metadata=NO_PDF),
     ]
@@ -1102,6 +1111,77 @@ forma honesta. La comparación relevante es **relativa**: si el MLP muestra AUC/
 consistentemente mayores que la regresión logística, hay evidencia de estructura no lineal
 aprovechable (Cap. 6); si empatan, la frontera lineal alcanza (Cap. 5).
 """),
+        new_markdown_cell(r"""### 8.3 Análisis por clase
+
+Los agregados (accuracy, F1 macro, AUC macro, mAP) resumen el desempeño global, pero ocultan
+en qué clase y de qué forma se equivoca cada modelo. Se desglosa a continuación el AUC y el AP
+por clase de ambos detectores.
+"""),
+        new_code_cell("""filas_por_clase = []
+for nombre, proba in [("Regresión Logística", proba_lr), ("MLP", proba_mlp)]:
+    for k in range(3):
+        fpr, tpr, _ = roc_curve(y_bin[:, k], proba[:, k])
+        auc_k = auc(fpr, tpr)
+        ap_k = average_precision_score(y_bin[:, k], proba[:, k])
+        filas_por_clase.append({"Modelo": nombre, "Clase": CLASES[k],
+                                 "AUC": round(auc_k, 3), "AP": round(ap_k, 3)})
+
+resumen_por_clase = pd.DataFrame(filas_por_clase)
+resumen_por_clase"""),
+        new_markdown_cell(r"""**(a) Matrices de confusión: qué confunde cada modelo con qué.** La Regresión Logística
+concentra el 77% de sus predicciones en LATERAL (414 de 540 muestras del test), muy por encima
+de la prevalencia real de esa clase (55%): colapsa hacia la clase mayoritaria, con recall de
+0.06 en BAJA (7 de 124) y 0.10 en SUBE (12 de 120), y precisión de 0.13 y 0.16 respectivamente.
+Es el comportamiento más estable de todo este análisis: estos números exactos se repitieron en
+las cuatro corridas realizadas del notebook, porque `LogisticRegression(random_state=SEED)` es
+plenamente determinística. El MLP no lo es — ni siquiera con `tf.random.set_seed` y
+`tf.config.experimental.enable_op_determinism()` activados: en cuatro corridas idénticas en
+código y datos, el modelo entrenado quedó sesgado hacia una clase distinta cada vez. En la
+corrida congelada en este notebook, sobre-predice fuertemente BAJA (234 de 540, contra 124
+reales) y sub-predice LATERAL (144 contra 296 reales) — el sesgo opuesto al de la Regresión
+Logística, con recall de 0.47 en BAJA pero de solo 0.27 en LATERAL. En corridas anteriores con
+el mismo código, el sesgo del MLP fue hacia una distribución más pareja entre clases, o incluso
+hacia LATERAL como la Regresión Logística: la *dirección* del sesgo cambia de corrida a
+corrida, no solo su magnitud. Financieramente esto es una limitación real del MLP tal como está
+entrenado acá — no solo la accuracy es inestable, sino a qué clase "le tiene fe" el modelo.
+Lo que sí se sostiene en esta corrida: las confusiones directas SUBE↔BAJA (36 y 45 casos) quedan
+por debajo de las confusiones de cualquiera de las dos con LATERAL (161 desde BAJA, 121 desde
+SUBE) — los errores siguen siendo más de magnitud que de dirección, igual que en la Regresión
+Logística.
+
+**(b) Curvas ROC y Precision-Recall por clase.** En esta corrida, los tres AUC por clase del
+MLP (0.520 BAJA, 0.503 LATERAL, 0.524 SUBE) quedan apenas por encima de 0.5, mientras que los
+de la Regresión Logística (0.483, 0.431, 0.409) están por debajo en dos de las tres clases. El
+AP por clase repite el patrón ya visto en la comparativa agregada: el de LATERAL (0.500 en
+Regresión Logística, 0.556 en MLP) está en línea con su prevalencia (0.548, la línea punteada
+de la figura), y el de BAJA y SUBE (0.20–0.24 en ambos modelos) es indistinguible de sus propias
+prevalencias (0.230 y 0.222). A nivel agregado, en las cuatro corridas el AUC macro del MLP se
+mantuvo siempre por encima del de la Regresión Logística (rango 0.482–0.516, contra 0.441 fijo)
+y lo mismo el mAP (rango 0.326–0.353, contra 0.307 fijo) — esa es la regularidad robusta de
+esta sección: ninguna clase es separable de forma contundente para ningún modelo en ninguna
+corrida, pero el ranking de probabilidades del MLP es consistentemente un poco menos malo que
+el de la Regresión Logística, más allá de cuál sea la corrida.
+
+**(c) Regresión Logística vs. MLP: ¿hay estructura no lineal aprovechable?** La respuesta
+depende de qué métrica se mire y, en este caso, también de qué corrida se mire — y esa doble
+dependencia es el resultado más honesto de esta sección. Por accuracy cruda, el resultado se
+invierte de corrida a corrida: la Regresión Logística ganó en tres de las cuatro (0.443 contra
+0.333, 0.394 y 0.328) y perdió por muy poco en la restante (0.443 contra 0.448). Ese vaivén es
+un reflejo del sesgo hacia una clase u otra en cada entrenamiento particular del MLP (panel a),
+no evidencia de que un modelo sea consistentemente mejor por esta métrica. La comparación que sí
+es estable es la de las métricas robustas al desbalance: F1 macro, AUC macro y mAP del MLP
+superaron a los de la Regresión Logística en las cuatro corridas sin excepción, por un margen
+modesto (entre 2 y 6 puntos porcentuales según la métrica y la corrida; en esta corrida, F1
+macro 0.322 contra 0.274, AUC macro 0.516 contra 0.441, mAP 0.344 contra 0.307). Hay entonces
+evidencia de una ventaja pequeña pero consistente del modelo no lineal, coherente con el margen
+de mejora esperable cuando existe algo de estructura adicional que un modelo lineal no puede
+capturar (Cap. 6) — pero la inestabilidad del propio entrenamiento del MLP entre corridas
+idénticas es, a su vez, evidencia adicional de que la señal disponible es débil: si hubiera
+estructura no lineal fuerte y estable para aprender, entrenamientos repetidos deberían converger
+a soluciones más parecidas entre sí. La propia noción de aproximación universal (sección de
+modelos) ya advertía que tener la capacidad de representar una función más compleja no
+garantiza haber aprendido una — ni siquiera la misma — cada vez.
+"""),
     ]
 
 
@@ -1192,13 +1272,24 @@ problema** (Cap. 5.2): más capacidad sólo ayuda si hay señal que capturar.
   mezclar, preservando el orden temporal también en la validación interna.
 - Comparación contra un **baseline trivial** (clase mayoritaria), no contra el 0%.
 - Uso de **F1 macro** además de *accuracy*, robusto frente al desbalance de clases.
+- Control de honestidad adicional: sobre un paseo aleatorio geométrico sintético (sin señal por
+  construcción), ningún modelo superó al baseline trivial (`verify_pipeline.py`), confirmando
+  la ausencia de *leakage* en el pipeline antes de correrlo con datos reales.
 
 **Limitaciones.** Los resultados corresponden a un único activo (RELIANCE), fijado de antemano;
 no se afirma que generalicen a otros mercados o instrumentos — la robustez multi-activo queda
 fuera de alcance. Los hiperparámetros θ, k y w se fijaron por diseño y no se barrieron en
 grilla, de modo que el resultado reportado es el de esta configuración puntual, no un óptimo
 buscado. Tampoco se evalúa el desempeño bajo un esquema *walk-forward* con reentrenamientos
-sucesivos, que es el estándar más exigente en series temporales financieras.
+sucesivos, que es el estándar más exigente en series temporales financieras. Por último, los
+resultados del MLP variaron de forma sustancial entre corridas idénticas en código y datos
+(accuracy entre 0.328 y 0.448 en las cuatro corridas realizadas), a pesar de fijar
+`np.random.seed`, `tf.random.set_seed` y `tf.config.experimental.enable_op_determinism()` — ni
+siquiera esa combinación cubre todo el no determinismo interno de TensorFlow/Keras, mientras
+que la Regresión Logística fue perfectamente reproducible en las cuatro. Por eso R5 reporta el
+rango observado entre corridas en vez de tratar los valores del MLP como un punto fijo: las
+conclusiones se apoyan en los patrones que se sostuvieron en las cuatro (qué métricas favorecen
+a qué modelo, no qué clase confunde con cuál de forma puntual), no en una corrida particular.
 
 **Conceptos de Goodfellow demostrados.** Tarea/desempeño/experiencia (Cap. 5); frontera lineal
 vs. no lineal y aproximación universal (Cap. 6); regularización L2, dropout y early stopping
