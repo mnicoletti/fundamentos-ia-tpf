@@ -95,7 +95,38 @@ R: CNN 1D (Cap. 9) para explotar localidad temporal — con el argumento elegant
 
 ---
 
-## 6. Anexo — Registro de revisión técnica (evaluación previa a la entrega)
+## 6. Checklist R4 — explicabilidad en voz alta
+
+Validado el 2026-07-23: los 8 bloques `> **Concepto — ...**` embebidos en el notebook (sección
+"7. Modelos") se revisaron uno por uno — fórmula con ejemplo numérico primero, confirmación de
+poder explicarla en voz alta sin mirarla después (PLAN.md F3, "Loop de validación por bloque").
+
+| # | Concepto | Ubicación en el notebook | Explicable en voz alta |
+|---|---|---|---|
+| 1 | Softmax como distribución de probabilidad | §7.1, tras la fórmula de la regresión logística | ✅ |
+| 2 | Cross-entropy como negative log-likelihood | §7.1, tras el entrenamiento de la regresión logística | ✅ (requirió una segunda pasada, con ejemplo extendido a 4 muestras) |
+| 3 | Capacidad y under/overfitting | §7.2, antes de `construir_mlp` | ✅ |
+| 4 | Aproximación universal ("representar" ≠ "aprender") | §7.2, antes de `construir_mlp` | ✅ |
+| 5 | Backpropagation como regla de la cadena | §7.2, tras `construir_mlp` | ✅ |
+| 6 | Regularización de parámetros: L2 + Dropout | §7.2, tras `construir_mlp` | ✅ |
+| 7 | Adam (tasas de aprendizaje adaptativas) | §7.2, tras `construir_mlp` | ✅ |
+| 8 | Early stopping | §7.2, epígrafe de la figura de curvas de pérdida | ✅ |
+
+**8/8 — checklist F3 completa.**
+
+Nota sobre el agrupamiento: SPEC.md lista "L2 / dropout / early stopping" como un solo bullet
+de conceptos mínimos, pero la aceptación de R4 pide "8 conceptos" — una inconsistencia real del
+propio documento (no corregida en SPEC.md/PLAN.md, solo resuelta acá). Se agrupó L2+Dropout en
+un solo bloque ("Regularización de parámetros") y se dejó *early stopping* aparte, porque ya
+contaba con su propia figura de anclaje (curvas de pérdida anotadas, R3.3).
+
+Pendiente para F5: notas al pie en el PDF con los conceptos de base que estos 8 bloques ya dan
+por sabidos (qué es softmax/regresión logística/MLP en una línea), pedido por Max durante la
+revisión de este checklist.
+
+---
+
+## 7. Anexo — Registro de revisión técnica (evaluación previa a la entrega)
 
 El notebook fue verificado ejecutando el pipeline completo de punta a punta con datos sintéticos (paseo aleatorio geométrico) y chequeos programáticos de alineación. Hallazgos y correcciones aplicadas:
 
