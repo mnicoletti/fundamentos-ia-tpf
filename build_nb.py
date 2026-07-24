@@ -520,7 +520,7 @@ for clase, color in colores_clase.items():
 
 pos_theta_elegido = etiquetas_x.index(f"{UMBRAL:.1%}")
 ax.axvline(pos_theta_elegido, color="black", ls="--", lw=1.2)
-ax.annotate("θ elegido = 2%", xy=(pos_theta_elegido, 1.03), xycoords=("data", "axes fraction"),
+ax.annotate("θ elegido = 2%", xy=(pos_theta_elegido, 1.06), xycoords="data",
             ha="center", fontsize=9)
 
 ax.set_ylabel("Proporción de muestras")
@@ -948,7 +948,7 @@ plt.show()"""),
 > la pérdida de validación sigue bajando se sigue entrenando; apenas deja de mejorar durante un
 > número fijo de épocas, se detiene y se vuelve al mejor punto visto, no al último.
 >
-> $$\text{detener en la época } t \text{ tal que } t - t_{\min} \ge \text{patience}, \qquad t_{\min} = \text{época, hasta } t\text{, con el menor val\_loss}$$
+> $$\begin{aligned} &\text{detener en la época } t \text{ tal que } t - t_{\min} \ge \text{patience} \\ &t_{\min} = \text{época con el menor } \texttt{val_loss} \text{ hasta } t \end{aligned}$$
 >
 > - $t_{\min}$ — la época, hasta el momento, con la menor pérdida de validación vista (el
 >   punto al que se vuelve al final).

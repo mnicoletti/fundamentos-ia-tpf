@@ -1,11 +1,18 @@
 # Makefile — TP Fundamentos de la IA
 #
 # Targets:
-#   make build     -> build_nb.py genera dist/TP_Fundamentos_IA_Financiero.ipynb
+#   make build     -> build_nb.py genera dist/TP_Fundamentos_IA_Financiero.ipynb (SIN outputs)
 #   make verify    -> depende de build; corre verify_pipeline.py (smoke test)
-#   make pdf       -> depende de build; nbconvert --to webpdf --no-input (requiere Chromium via Playwright)
-#   make pdf-html  -> depende de build; fallback si webpdf falla (ADR-004): HTML + print-to-PDF manual
+#   make pdf       -> nbconvert --to webpdf --no-input sobre lo que haya en dist/ ahora mismo
+#                     (requiere Chromium via Playwright)
+#   make pdf-html  -> igual que pdf, fallback si webpdf falla (ADR-004): HTML + print-to-PDF manual
 #   make clean     -> borra dist/ y el entorno virtual local
+#
+# IMPORTANTE (F4/F5): pdf y pdf-html NO dependen de build a propósito. Una vez
+# congelada la corrida canónica (dist/TP_Fundamentos_IA_Financiero.ipynb con
+# outputs reales, ADR-001), correr "make build" la pisa con una versión vacía
+# sin ejecutar. En F5 (typographic pass del PDF) siempre se corre sobre el
+# .ipynb congelado que ya está en dist/, nunca se reconstruye antes.
 #
 # Requiere python3.11 disponible en PATH. El resto de las dependencias se
 # instalan en un virtualenv local (.venv), gitignored.
@@ -41,14 +48,14 @@ $(PDF_STAMP): $(STAMP) requirements-pdf.txt
 	$(PYTHON) -m playwright install chromium
 	touch $(PDF_STAMP)
 
-pdf: build $(PDF_STAMP)
+pdf: $(PDF_STAMP)
 	$(PYTHON) -m nbconvert --to webpdf --no-input \
 		--TagRemovePreprocessor.enabled=True \
 		--TagRemovePreprocessor.remove_cell_tags='["no-pdf"]' \
 		--output-dir dist --output $(PDF_BASENAME) \
 		$(NOTEBOOK)
 
-pdf-html: build
+pdf-html: $(STAMP)
 	$(PYTHON) -m nbconvert --to html --no-input \
 		--TagRemovePreprocessor.enabled=True \
 		--TagRemovePreprocessor.remove_cell_tags='["no-pdf"]' \
